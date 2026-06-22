@@ -209,173 +209,191 @@ class format_multitopic extends core_courseformat\base {
         } else {
             $this->fmtsectionsextracomplete = false;
 
-            if ($course) {
-                $sections = $modinfo->get_section_info_all();
-            } else {
-                $sections = [];
-            }
+            $sections = $course ? $modinfo->get_section_info_all() : [];
 
-            $timenow = time();
-
-            $courseperioddays = format_multitopic_duration_as_days($course->periodduration);
-
-            // Forward pass.
-
-            // Initialise generated list of sections.
-            $fmtsectionsextra = [];
-
-            // The previous section at, or above, each level.
-            $sectionextraprevatlevel = array_fill(
-                FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
-                FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
-                null
-            );
-
-            // The current section at, or above, each level.
-            $sectionextraatlevel = array_fill(
-                FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
-                FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
-                null
-            );
-
-            foreach ($sections as $thissection) {
-                // Create new object.
-                $thissectionextra = new \format_multitopic\section_info_extra($thissection);
-
-                if (!empty($thissection->component)) {
-                    $thissectionextra->levelsan = 0;
-                    $fmtsectionsextra[$thissection->id] = $thissectionextra;
-                    continue;
-                }
-
-                // Fix the section's level within appropriate bounds.
-                $levelsan = ($sectionextraatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT] == null) ?
-                        FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT
-                        : max(
-                            FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
-                            min($thissection->level ?? FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC, FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC)
-                        );
-                $thissectionextra->levelsan = $levelsan;
-
-                // Update remembered sections.
-                for ($sublevel = $levelsan; $sublevel <= FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC; $sublevel++) {
-                    $sectionextraprevatlevel[$sublevel] = $sectionextraatlevel[$sublevel];
-                    $sectionextraatlevel[$sublevel] = $thissectionextra;
-                }
-
-                // The previous section at or above this section's level.
-                $thissectionextra->prevupid = $sectionextraprevatlevel[$levelsan] ? $sectionextraprevatlevel[$levelsan]->id : null;
-
-                // The previous page.
-                $thissectionextra->prevpageid = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1] ?
-                                                $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1]->id : null;
-
-                // The previous section at any level.
-                $thissectionextra->prevanyid = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
-                                                $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->id : null;
-
-                // The section's parent.
-                $thissectionextra->parentid = ($levelsan > FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
-                                                $sectionextraatlevel[$levelsan - 1]->id : null;
-
-                // Initialise tree-related properties to be set in the reverse pass.
-                $thissectionextra->hassubsections = false;  // Whether this section has any subsections (page or topic).
-                $thissectionextra->pagedepth = $levelsan;   // The lowest level of all sub-pages.
-                $thissectionextra->pagedepthdirect = $levelsan; // The lowest level of direct sub-pages.
-
-                // Set visibility properties.
-                $thissectionextra->parentvisiblesan = ($levelsan <= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
-                                                    true : $sectionextraatlevel[$levelsan - 1]->visiblesan;
-                $thissectionextra->visiblesan = ($levelsan <= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
-                                                    true
-                                                    : ($sectionextraatlevel[$levelsan - 1]->visiblesan && $thissection->visible);
-
-                // Set date-start property from previous section.
-                $thissectionextra->datestart = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
-                                                $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->dateend
-                                                : (is_null($courseperioddays) ? null : $course->startdate);
-
-                // Set date-end property.
-                if ($levelsan < FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC) {
-                    $sectionperioddays = 0;
-                } else {
-                    $sectionperioddays = format_multitopic_duration_as_days($thissection->periodduration);
-                    if ($sectionperioddays === null) {
-                        $sectionperioddays = $courseperioddays;
-                    }
-                }
-                $thissectionextra->dateend = (is_null($thissectionextra->datestart) || is_null($sectionperioddays)) ?
-                                            null
-                                            : ($thissectionextra->datestart + $sectionperioddays * 24 * 60 * 60);
-
-                // The level down to which this section contains the current section.
-                // Initialise for reverse pass.
-                $iscurrent = $thissectionextra->dateend
-                            && ($thissectionextra->datestart <= $timenow) && ($timenow < $thissectionextra->dateend);
-                $thissectionextra->currentnestedlevel = $iscurrent ? FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC
-                                                            : FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT - 1;
-
-                // Add this section to the list.
-                $fmtsectionsextra[$thissection->id] = $thissectionextra;
-            }
+            $fmtsectionsextra = $this->fmt_sections_extra_forward_pass($sections, $course);
 
             $this->fmtsectionsextra = $fmtsectionsextra;
             $this->fmtmodinfo = $modinfo;
         }
 
         if ($needall && !$this->fmtsectionsextracomplete) {
-            // Reverse pass.
-
-            // Remembered sections.
-            $sectionnextatlevel = array_fill(
-                FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
-                FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
-                null
-            );
-
-            foreach (array_reverse($fmtsectionsextra) as $thissectionextra) {
-                $thissection = $thissectionextra->sectionbase;
-
-                if (!empty($thissection->component)) {
-                    continue;
-                }
-
-                $levelsan = $thissectionextra->levelsan;
-
-                // Tree properties from next sections.
-                $thissectionextra->nextupid = $sectionnextatlevel[$levelsan] ?
-                                                $sectionnextatlevel[$levelsan]->id : null;
-                $thissectionextra->nextpageid = $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1] ?
-                                                $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1]->id : null;
-                $thissectionextra->nextanyid = $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
-                                                $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->id : null;
-
-                // Parent's tree properties.
-                if ($thissectionextra->parentid) {
-                    $parent = $fmtsectionsextra[$thissectionextra->parentid];
-                    $parent->hassubsections = true;
-                    if ($levelsan < FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC) {
-                        $parent->pagedepth = max($parent->pagedepth, $thissectionextra->pagedepth);
-                        if ($this->is_section_visible($thissection)) {
-                            $parent->pagedepthdirect = max($parent->pagedepthdirect, $levelsan);
-                        }
-                    }
-                    if ($thissectionextra->currentnestedlevel >= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) {
-                        $parent->currentnestedlevel = max($parent->currentnestedlevel, $levelsan - 1);
-                    }
-                }
-
-                // Update remembered next sections.
-                for ($sublevel = $levelsan; $sublevel <= FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC; $sublevel++) {
-                    $sectionnextatlevel[$sublevel] = $thissectionextra;
-                }
-            }
+            $this->fmt_sections_extra_reverse_pass($fmtsectionsextra);
 
             $this->fmtsectionsextra = $fmtsectionsextra;
             $this->fmtsectionsextracomplete = true;
         }
 
         return $fmtsectionsextra;
+    }
+
+    /**
+     * Forward pass for {@see fmt_get_sections_extra()}: builds the extra section info in course
+     * order, setting each section's sanitised level, previous/parent links, visibility, and date
+     * range. Tree roll-up properties are initialised here and finalised by the reverse pass.
+     *
+     * @param \section_info[] $sections sections in course order, from get_section_info_all()
+     * @param \stdClass $course the course
+     * @return \format_multitopic\section_info_extra[] extra section info keyed by section id
+     */
+    private function fmt_sections_extra_forward_pass(array $sections, $course): array {
+        $timenow = time();
+
+        $courseperioddays = format_multitopic_duration_as_days($course->periodduration);
+
+        // Initialise generated list of sections.
+        $fmtsectionsextra = [];
+
+        // The previous section at, or above, each level.
+        $sectionextraprevatlevel = array_fill(
+            FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
+            FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
+            null
+        );
+
+        // The current section at, or above, each level.
+        $sectionextraatlevel = array_fill(
+            FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
+            FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
+            null
+        );
+
+        foreach ($sections as $thissection) {
+            // Create new object.
+            $thissectionextra = new \format_multitopic\section_info_extra($thissection);
+
+            if (!empty($thissection->component)) {
+                $thissectionextra->levelsan = 0;
+                $fmtsectionsextra[$thissection->id] = $thissectionextra;
+                continue;
+            }
+
+            // Fix the section's level within appropriate bounds.
+            $levelsan = ($sectionextraatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT] == null) ?
+                    FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT
+                    : max(
+                        FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
+                        min($thissection->level ?? FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC, FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC)
+                    );
+            $thissectionextra->levelsan = $levelsan;
+
+            // Update remembered sections.
+            for ($sublevel = $levelsan; $sublevel <= FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC; $sublevel++) {
+                $sectionextraprevatlevel[$sublevel] = $sectionextraatlevel[$sublevel];
+                $sectionextraatlevel[$sublevel] = $thissectionextra;
+            }
+
+            // The previous section at or above this section's level.
+            $thissectionextra->prevupid = $sectionextraprevatlevel[$levelsan] ? $sectionextraprevatlevel[$levelsan]->id : null;
+
+            // The previous page.
+            $thissectionextra->prevpageid = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1] ?
+                                            $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1]->id : null;
+
+            // The previous section at any level.
+            $thissectionextra->prevanyid = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
+                                            $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->id : null;
+
+            // The section's parent.
+            $thissectionextra->parentid = ($levelsan > FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
+                                            $sectionextraatlevel[$levelsan - 1]->id : null;
+
+            // Initialise tree-related properties to be set in the reverse pass.
+            $thissectionextra->hassubsections = false;  // Whether this section has any subsections (page or topic).
+            $thissectionextra->pagedepth = $levelsan;   // The lowest level of all sub-pages.
+            $thissectionextra->pagedepthdirect = $levelsan; // The lowest level of direct sub-pages.
+
+            // Set visibility properties.
+            $thissectionextra->parentvisiblesan = ($levelsan <= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
+                                                true : $sectionextraatlevel[$levelsan - 1]->visiblesan;
+            $thissectionextra->visiblesan = ($levelsan <= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) ?
+                                                true
+                                                : ($sectionextraatlevel[$levelsan - 1]->visiblesan && $thissection->visible);
+
+            // Set date-start property from previous section.
+            $thissectionextra->datestart = $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
+                                            $sectionextraprevatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->dateend
+                                            : (is_null($courseperioddays) ? null : $course->startdate);
+
+            // Set date-end property.
+            if ($levelsan < FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC) {
+                $sectionperioddays = 0;
+            } else {
+                $sectionperioddays = format_multitopic_duration_as_days($thissection->periodduration);
+                if ($sectionperioddays === null) {
+                    $sectionperioddays = $courseperioddays;
+                }
+            }
+            $thissectionextra->dateend = (is_null($thissectionextra->datestart) || is_null($sectionperioddays)) ?
+                                        null
+                                        : ($thissectionextra->datestart + $sectionperioddays * 24 * 60 * 60);
+
+            // The level down to which this section contains the current section.
+            // Initialise for reverse pass.
+            $iscurrent = $thissectionextra->dateend
+                        && ($thissectionextra->datestart <= $timenow) && ($timenow < $thissectionextra->dateend);
+            $thissectionextra->currentnestedlevel = $iscurrent ? FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC
+                                                        : FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT - 1;
+
+            // Add this section to the list.
+            $fmtsectionsextra[$thissection->id] = $thissectionextra;
+        }
+
+        return $fmtsectionsextra;
+    }
+
+    /**
+     * Reverse pass for {@see fmt_get_sections_extra()}: walks the sections in reverse to set the
+     * next-section links and to roll tree properties up to parents (subsections, page depth, and
+     * the level down to which each section contains the current section).
+     *
+     * @param \format_multitopic\section_info_extra[] $fmtsectionsextra section info keyed by id; modified in place
+     */
+    private function fmt_sections_extra_reverse_pass(array $fmtsectionsextra): void {
+        // Remembered sections.
+        $sectionnextatlevel = array_fill(
+            FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT,
+            FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT + 1,
+            null
+        );
+
+        foreach (array_reverse($fmtsectionsextra) as $thissectionextra) {
+            $thissection = $thissectionextra->sectionbase;
+
+            if (!empty($thissection->component)) {
+                continue;
+            }
+
+            $levelsan = $thissectionextra->levelsan;
+
+            // Tree properties from next sections.
+            $thissectionextra->nextupid = $sectionnextatlevel[$levelsan] ?
+                                            $sectionnextatlevel[$levelsan]->id : null;
+            $thissectionextra->nextpageid = $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1] ?
+                                            $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC - 1]->id : null;
+            $thissectionextra->nextanyid = $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC] ?
+                                            $sectionnextatlevel[FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC]->id : null;
+
+            // Parent's tree properties.
+            if ($thissectionextra->parentid) {
+                $parent = $fmtsectionsextra[$thissectionextra->parentid];
+                $parent->hassubsections = true;
+                if ($levelsan < FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC) {
+                    $parent->pagedepth = max($parent->pagedepth, $thissectionextra->pagedepth);
+                    if ($this->is_section_visible($thissection)) {
+                        $parent->pagedepthdirect = max($parent->pagedepthdirect, $levelsan);
+                    }
+                }
+                if ($thissectionextra->currentnestedlevel >= FORMAT_MULTITOPIC_SECTION_LEVEL_ROOT) {
+                    $parent->currentnestedlevel = max($parent->currentnestedlevel, $levelsan - 1);
+                }
+            }
+
+            // Update remembered next sections.
+            for ($sublevel = $levelsan; $sublevel <= FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC; $sublevel++) {
+                $sectionnextatlevel[$sublevel] = $thissectionextra;
+            }
+        }
     }
 
     /**
