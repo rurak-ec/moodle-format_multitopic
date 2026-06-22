@@ -15,6 +15,12 @@ upstream; entries below describe the fork-specific deltas. The format is based o
   (CI matrix: 5.0 / 5.1 / 5.2 stable + non-blocking `main` / 5.3-dev).
 
 ### Code quality (no functional changes)
+- Added `fmt_is_section_user_visible()` and routed the four "Variant A" occurrences of the
+  `$s->section == 0 || $s->uservisible && $format->is_section_visible($s)` predicate through it
+  (`content.php`, `sectionnavigation.php` ×2, `global_navigation_wrapper.php`). The helper keeps the
+  exact expression and short-circuit; verified `helper === inline` for every section of a multi-level
+  course with hidden pages/topics; phpcs 0/0. The semantically-different "Variant B" sites
+  (`section.php`, `tabtreecontainer.php`, and inside `is_section_visible()`) were left untouched.
 - Split the 178-line `fmt_get_sections_extra()` into `fmt_sections_extra_forward_pass()` and
   `fmt_sections_extra_reverse_pass()` private helpers. Verified behaviour-preserving: the computed
   section-extra output (sanitised levels, prev/next/parent links, visibility, date range,
@@ -34,8 +40,5 @@ upstream; entries below describe the fork-specific deltas. The format is based o
   extract and merging would break the expected per-method pattern.
 
 ### Deferred (next, CI-gated)
-- De-duplicating the `($section->section == 0 || $section->uservisible [&& is_section_visible])`
-  visibility predicate that recurs across ~6 files into a shared helper — a real but broad change,
-  kept for its own focused commit (precedence-sensitive; touches many output classes).
 - Moodle 4.5 support is intentionally **not** declared; lowering the floor below 5.0 requires
   compatibility shims and is deferred to a separate functional pass.

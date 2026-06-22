@@ -98,7 +98,7 @@ class content extends content_base {
         if (
             !(
                 ($sectioninfo = $displaysectionextra->sectionbase)
-                && (($sectioninfo->section == 0) || $sectioninfo->uservisible && $format->is_section_visible($sectioninfo))
+                && $format->fmt_is_section_user_visible($sectioninfo)
             )
         ) {
             // This section doesn't exist or is not available for the user.

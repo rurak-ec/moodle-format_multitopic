@@ -189,7 +189,7 @@ class global_navigation_wrapper {
             $sectionextra = course_get_format($course)->fmt_get_section_extra($section); // ADDED.
 
             if (
-                !(($section->section == 0) || $section->uservisible && course_get_format($course)->is_section_visible($section))
+                !course_get_format($course)->fmt_is_section_user_visible($section)
                 || (
                     !$this->innershowemptysections
                     && !$section->hasactivites && !$sectionextra->hassubsections

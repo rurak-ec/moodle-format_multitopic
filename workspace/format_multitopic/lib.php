@@ -1397,6 +1397,19 @@ class format_multitopic extends core_courseformat\base {
     // END INCLUDED.
 
     /**
+     * Whether the given section is visible to the current user: the general section (0) is always
+     * shown; otherwise it must be user-visible AND visible within this format. Shared form of the
+     * `$s->section == 0 || $s->uservisible && $format->is_section_visible($s)` predicate used by the
+     * format's output classes.
+     *
+     * @param section_info $section the section to test
+     * @return bool true if the section should be shown to the current user
+     */
+    public function fmt_is_section_user_visible(section_info $section): bool {
+        return ($section->section == 0) || ($section->uservisible && $this->is_section_visible($section));
+    }
+
+    /**
      * Allows to specify for modinfo that section is not available even when it is visible and conditionally available.
      *
      * @param section_info $section

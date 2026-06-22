@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026062201;          // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version = 2026062202;          // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires = 2025041400;         // Requires this Moodle version (5.0).
 $plugin->supported = [500, 503];        // Supported Moodle range: 5.0 to 5.3 (5.3 is dev/main). // rurak-ec: cap support window.
 $plugin->component = 'format_multitopic';    // Full name of the plugin (used for diagnostics). // CHANGED: format name.
