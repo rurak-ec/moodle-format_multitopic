@@ -22,7 +22,6 @@
  * @copyright based on work by 2012 Dan Poltawski
  * @copyright based on work by 2020 Ferran Recio <ferran@moodle.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since     Moodle 2.3
  */
 
 namespace format_multitopic\output;

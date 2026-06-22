@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<ruleset name="format_multitopic">
+    <description>
+        Moodle coding standard for format_multitopic.
+
+        This plugin is a fork of james-cnz/moodle-format_multitopic. Its upstream TODO / @todo
+        notes do not carry Moodle core "MDL-xxxxx" issue numbers, so the issue-reference
+        requirement of moodle.Commenting.TodoComment is relaxed here. Everything else follows
+        the standard Moodle ruleset unchanged.
+    </description>
+
+    <rule ref="moodle"/>
+
+    <!-- Don't require an "MDL-xxxxx" reference in upstream TODO/@todo notes. -->
+    <rule ref="moodle.Commenting.TodoComment">
+        <properties>
+            <property name="commentRequiredRegex" value=""/>
+        </properties>
+    </rule>
+</ruleset>

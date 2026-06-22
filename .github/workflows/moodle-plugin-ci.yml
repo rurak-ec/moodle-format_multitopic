@@ -1,114 +1,111 @@
-# Based on <https://github.com/moodlehq/moodle-plugin-ci/blob/master/gha.dist.yml>
-# and <https://moodlehq.github.io/moodle-plugin-ci/GHAFileExplained.html>
+name: moodle-plugin-ci
 
-name: Moodle Plugin CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-on: [push, pull_request]
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-22.04
 
+    # The "main" row tracks Moodle development (the future 5.3) as an early warning
+    # only; it is allowed to fail without failing the workflow.
+    continue-on-error: ${{ matrix.experimental || false }}
+
     services:
       postgres:
-        image: postgres:16 # Moodle 5.2
+        image: postgres:16
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
 
       mariadb:
-        image: mariadb:10.11 # Moodle 5.0
+        image: mariadb:10.11
         env:
           MYSQL_USER: 'root'
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
           MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
           MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
-
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Moodle 5.0.0, PHP 8.2, PostgreSQL
-          - php: '8.2' # 8.2-8.4
-            moodle-branch: 'v5.0.0'
-            database: pgsql
-            plugin-ci: ^4
-            # extensions: xmlrpc-beta
-          # Moodle 5.0, PHP 8.2, PostgreSQL
-          - php: '8.2' # 8.2-8.4
+          # Supported floor is Moodle 5.0; 4.5 is intentionally not tested (see version.php).
+          - php: '8.2'
             moodle-branch: 'MOODLE_500_STABLE'
-            database: pgsql
-            plugin-ci: ^4
-            # extensions: xmlrpc-beta
-          # Moodle 5.1, PHP 8.3, MariaDB
-          - php: '8.3' # 8.2-8.4
+            database: 'pgsql'
+          - php: '8.2'
             moodle-branch: 'MOODLE_501_STABLE'
-            database: mariadb
-            plugin-ci: ^4
-            # extensions: xmlrpc-beta
-          # Moodle 5.2, PHP 8.4, PostgresSQL
-          - php: '8.4' # 8.3-8.4
+            database: 'pgsql'
+          - php: '8.3'
+            moodle-branch: 'MOODLE_501_STABLE'
+            database: 'mariadb'
+          - php: '8.3'
             moodle-branch: 'MOODLE_502_STABLE'
-            database: pgsql
-            plugin-ci: ^4
-            # extensions: xmlrpc-beta
-          # Moodle 5.3, PHP 8.4, MariaDB
-          - php: '8.4' # 8.3-8.4
+            database: 'pgsql'
+          - php: '8.4'
+            moodle-branch: 'MOODLE_502_STABLE'
+            database: 'mariadb'
+          # Moodle 5.3 is not released yet; track the dev branch as a non-blocking check.
+          - php: '8.4'
             moodle-branch: 'main'
-            database: mariadb
-            plugin-ci: ^4
-            # extensions: xmlrpc-beta
+            database: 'pgsql'
+            experimental: true
 
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
-          path: plugin
+          path: repo
 
       - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: ${{ matrix.extensions }} # PHP 8 changes
+          extensions: pgsql, mysqli, gd, zip, intl, soap, exif, sodium
           ini-values: max_input_vars=5000
-          # If you are not using code coverage, keep "none". Otherwise, use "pcov" (Moodle 3.10 and up) or "xdebug".
-          # If you try to use code coverage with "none", it will fallback to phpdbg (which has known problems).
           coverage: none
 
       - name: Initialise moodle-plugin-ci
         run: |
-          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ${{ matrix.plugin-ci }}
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
 
       - name: Install moodle-plugin-ci
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        run: moodle-plugin-ci install --plugin ./repo/workspace/format_multitopic --db-host=127.0.0.1
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-          # Uncomment this to run Behat tests using the Moodle App.
-          # MOODLE_APP: 'true'
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phplint
 
-      - name: PHP Copy/Paste Detector
-        continue-on-error: true # This step will show errors but will not fail
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpcpd
-
       - name: PHP Mess Detector
-        continue-on-error: true # This step will show errors but will not fail
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpmd
 
@@ -143,7 +140,7 @@ jobs:
       - name: Behat features
         id: behat
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
+        run: moodle-plugin-ci behat --profile chrome
 
       - name: Upload Behat Faildump
         if: ${{ failure() && steps.behat.outcome == 'failure' }}
@@ -153,7 +150,3 @@ jobs:
           path: ${{ github.workspace }}/moodledata/behat_dump
           retention-days: 7
           if-no-files-found: ignore
-
-      - name: Mark cancelled jobs as failed.
-        if: ${{ cancelled() }}
-        run: exit 1

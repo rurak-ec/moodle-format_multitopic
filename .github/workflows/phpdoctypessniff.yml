@@ -23,4 +23,4 @@ jobs:
           echo "${HOME}/.composer/vendor/bin" >> $GITHUB_PATH
 
       - name: PHPDoc types sniff
-        run: phpcs --standard=JamesCNZMoodle --ignore=vendor/,node_modules/ .
+        run: phpcs --standard=JamesCNZMoodle --ignore=vendor/,node_modules/ workspace/format_multitopic
