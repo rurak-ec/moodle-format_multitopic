@@ -1009,6 +1009,10 @@ class format_multitopic extends core_courseformat\base {
                     'default' => 0,
                     'type' => PARAM_INT,
                 ],
+                'showpagetitleinbody' => [
+                    'default' => 0,
+                    'type' => PARAM_INT,
+                ],
                 // END ADDED.
             ];
         }
@@ -1091,6 +1095,18 @@ class format_multitopic extends core_courseformat\base {
                     'element_attributes' => [
                             // Labels ' 0%'..' 9%','10%'..'100%' (single digits left-padded to 2 for alignment).
                             array_map(static fn($pct) => str_pad((string) $pct, 2, ' ', STR_PAD_LEFT) . '%', range(0, 100)),
+                    ],
+                ],
+                'showpagetitleinbody' => [
+                    'label' => new lang_string('showpagetitleinbody', 'format_multitopic'),
+                    'help' => 'showpagetitleinbody',
+                    'help_component' => 'format_multitopic',
+                    'element_type' => 'select',
+                    'element_attributes' => [
+                        [
+                            0 => new lang_string('showpagetitleinbody_hide', 'format_multitopic'),
+                            1 => new lang_string('showpagetitleinbody_show', 'format_multitopic'),
+                        ],
                     ],
                 ],
                 // END ADDED.

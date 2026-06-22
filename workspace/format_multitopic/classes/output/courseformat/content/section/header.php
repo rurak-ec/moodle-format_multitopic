@@ -80,6 +80,13 @@ class header extends header_base {
 
         $data->sectionbulk = true;
 
+        // ADDED: hide a page's redundant body title (its name already shows as a tab),
+        // unless editing or the course opts to show it.  Topic sections keep their title.
+        $data->fmthidepagetitle = !$format->show_editor()
+            && empty($course->showpagetitleinbody)
+            && ($sectionextra->levelsan < FORMAT_MULTITOPIC_SECTION_LEVEL_TOPIC);
+        // END ADDED.
+
         return $data;
     }
 }
