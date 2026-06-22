@@ -7,6 +7,15 @@ upstream; entries below describe the fork-specific deltas. The format is based o
 
 ## [Unreleased]
 
+### Added
+- New course format option **"Page title in body"** (`showpagetitleinbody`, default *Hide*): a
+  page/tab no longer repeats its own name as a redundant heading inside the page body in the
+  non-editing (student) view — the name still shows as a tab. The heading is kept in **editing mode**
+  (to preserve rename/move/delete controls) and **topic** headings are unaffected. Implemented with a
+  template flag (`fmthidepagetitle` in `content/section/header.php` + `header.mustache`) gated on the
+  section level and `show_editor()`; no DB/schema change, `get_section_name()` untouched. Spanish
+  strings added under `lang/es/`. Bumped `$plugin->version` to `2026062300`; phpcs 0/0.
+
 ### Changed
 - Forked from upstream `v5.1.1` and adopted the rurak-ec workspace repo layout
   (`workspace/format_multitopic/`, `scripts/`, `docs/`, root `README`/`CONTRIBUTING`/`LICENSE`,

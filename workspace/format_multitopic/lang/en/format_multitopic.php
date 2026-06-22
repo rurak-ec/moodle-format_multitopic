@@ -100,6 +100,10 @@ $string['move_page_prev'] = 'Move page left';
 $string['move_to_next_page'] = 'Move to next page';
 $string['move_to_prev_page'] = 'Move to previous page';
 $string['showfromothers'] = 'Show';
+$string['showpagetitleinbody'] = 'Page title in body';
+$string['showpagetitleinbody_help'] = 'A page (tab) shows its name in the tab bar. By default that same name is not repeated as a heading inside the page body, to avoid redundancy. Choose "Show in the page body too" to also display it as a heading. This only affects pages; topic headings are always shown, and the title is always shown while editing.';
+$string['showpagetitleinbody_hide'] = 'Hide (show only as a tab)';
+$string['showpagetitleinbody_show'] = 'Show in the page body too';
 
 // Deprecated since Multitopic v5.1.
 $string['section0name'] = 'General';

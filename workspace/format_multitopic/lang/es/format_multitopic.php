@@ -15,20 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Spanish strings for component Multitopic course format (rurak-ec additions).
  *
  * @package   format_multitopic
  * @copyright 2019 onwards James Calder and Otago Polytechnic
- * @copyright based on work by 1999 onwards Martin Dougiamas (http://dougiamas.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version = 2026062300;          // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires = 2025041400;         // Requires this Moodle version (5.0).
-$plugin->supported = [500, 503];        // Supported Moodle range: 5.0 to 5.3 (5.3 is dev/main). // rurak-ec: cap support window.
-$plugin->component = 'format_multitopic';    // Full name of the plugin (used for diagnostics). // CHANGED: format name.
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v5.1.1';
-$plugin->dependencies = ['format_topics' => 2025041400];
+$string['showpagetitleinbody'] = 'Título de la página en el cuerpo';
+$string['showpagetitleinbody_help'] = 'Una página (pestaña) ya muestra su nombre en la barra de pestañas. Por defecto ese mismo nombre no se repite como encabezado dentro del cuerpo de la página, para evitar la redundancia. Elige "Mostrar también en el cuerpo de la página" para mostrarlo también como encabezado. Esto solo afecta a las páginas; los títulos de los temas siempre se muestran, y el título siempre aparece en modo edición.';
+$string['showpagetitleinbody_hide'] = 'Ocultar (mostrar solo como pestaña)';
+$string['showpagetitleinbody_show'] = 'Mostrar también en el cuerpo de la página';
