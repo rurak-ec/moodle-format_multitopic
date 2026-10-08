@@ -30,6 +30,24 @@ This is the rurak-ec fork. The upstream remote is kept as `upstream`
 Compared to upstream we cap the supported Moodle range to **5.0–5.3-dev** and apply house code-quality
 conventions; **plugin functionality is unchanged**.
 
+### Theming
+Each row of section tabs (row 1: pages; row 2: sub-pages) is a compact segmented bar, like the theme's
+secondary navigation: a softly tinted rounded bar, the tabs as text, a light pill on the active tab and thin
+soft dividers between tabs. Every colour comes from the active theme's Bootstrap 5.3 variables
+(`--bs-tertiary-bg`, `--bs-primary-bg-subtle`, `--bs-body-color`, `--bs-primary`, `--bs-emphasis-color-rgb`, …),
+so the tabs follow each theme's colours and dark mode with no theme CSS. A theme can fine-tune them by
+redefining these tokens on `body.format-multitopic .course-section-tabs`:
+
+| Token | Used for |
+|---|---|
+| `--fmt-tab-bar-bg` | Bar background |
+| `--fmt-tab-text` / `--fmt-tab-hover-text` | Tab text / text on hover |
+| `--fmt-tab-active-bg` | Pill behind the active (and hovered) tab |
+| `--fmt-tab-divider` | Dividers between tabs |
+| `--fmt-tab-accent` | Marker, focus ring, "+" tab |
+| `--fmt-tab-muted` | Hidden/unavailable sections (`.dimmed`) |
+| `--fmt-tab-radius` / `--fmt-tabs-gap` | Corner radius / space above and below the tabs |
+
 ### Installation
 1. Build the ZIP: `./scripts/package_workspace.sh`
 2. Install via **Site administration → Plugins → Install plugins**, or copy
@@ -57,6 +75,14 @@ Este es el fork de rurak-ec. Se conserva el remote `upstream`
 (`git@github.com:james-cnz/moodle-format_multitopic.git`) para seguir trayendo mejoras. Frente a
 upstream acotamos el rango de Moodle soportado a **5.0–5.3-dev** y aplicamos las convenciones de código
 de la casa; **la funcionalidad del plugin no cambia**.
+
+### Apariencia (temas)
+Cada fila de pestañas de sección (fila 1: páginas; fila 2: subpáginas) es una barra segmentada compacta, como la
+navegación secundaria del tema: barra redondeada con un tono suave, pestañas como texto, una pastilla clara en
+la activa y líneas divisorias finas y suaves entre pestañas. Todos los colores salen de las variables de
+Bootstrap 5.3 del tema activo, así que siguen los colores y el modo oscuro de cada tema sin CSS en el tema. Un
+tema puede ajustarlos redefiniendo los tokens `--fmt-tab-*` (tabla en la sección *Theming*) sobre
+`body.format-multitopic .course-section-tabs`.
 
 ### Instalación
 1. Generar el ZIP: `./scripts/package_workspace.sh`

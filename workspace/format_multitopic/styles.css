@@ -20,27 +20,153 @@ body.format-multitopic div#course-header > p#course-header-banner_attribution {
     font-size: xx-small;
 }
 
-/* Tabs */
-body.format-multitopic .course-content ul.nav-tabs li a div.tab_content.marker::before {
+/* Tabs: the design belongs to the format, the colours come from the active theme.
+ * Each row of tabs (row 1: pages; row 2: sub-pages) is a compact segmented bar, like the theme's secondary
+ * navigation: a softly tinted rounded bar with the tabs as text, a light pill on the active tab, and soft
+ * dividers between every pair of neighbouring tabs (also next to the active or hovered tab).
+ * Every colour is a --fmt-tab-* token taken from the theme's Bootstrap 5.3 variables, so the tabs follow each
+ * theme's colours and dark mode. A theme can fine-tune them by redefining the tokens on
+ * "body.format-multitopic .course-section-tabs". Rows are matched structurally (> ul) because the reactive JS
+ * re-creates them, and every rule outranks the theme's own .nav-tabs styles. */
+body.format-multitopic {
+    --fmt-tabs-gap: 1.5rem;
+}
+body.format-multitopic .course-section-tabs {
+    --fmt-tab-bar-bg: var(--bs-tertiary-bg, rgba(0, 0, 0, .03));
+    --fmt-tab-text: var(--bs-body-color);
+    --fmt-tab-hover-text: var(--bs-primary);
+    --fmt-tab-active-bg: var(--bs-primary-bg-subtle, rgba(var(--bs-primary-rgb), .1));
+    --fmt-tab-divider: rgba(var(--bs-emphasis-color-rgb, 0, 0, 0), .24);
+    --fmt-tab-divider-width: 1px;
+    --fmt-tab-accent: var(--bs-primary);
+    --fmt-tab-muted: var(--bs-tertiary-color, var(--bs-secondary-color));
+    --fmt-tab-radius: var(--bs-border-radius, .375rem);
+    padding-top: var(--fmt-tabs-gap);
+    contain: layout;
+}
+
+/* Dark mode: a faint light overlay for the bar and a translucent primary pill, so they work on any dark page. */
+[data-bs-theme="dark"] body.format-multitopic .course-section-tabs {
+    --fmt-tab-bar-bg: rgba(var(--bs-emphasis-color-rgb, 255, 255, 255), .05);
+    --fmt-tab-active-bg: rgba(var(--bs-primary-rgb), .25);
+    --fmt-tab-hover-text: var(--bs-primary-text-emphasis, var(--bs-primary));
+}
+
+/* Each row is a bar as wide as its tabs (wrapping when needed); rows stack with a small gap and the last one
+ * keeps the gap above the content. !important is needed to beat the .mb-3 utility the rows carry.
+ * overflow: hidden clips the divider of the first tab of each wrapped line, which falls just outside the bar
+ * (the others sit in the gap between tabs, as wide as the divider). */
+body.format-multitopic .course-section-tabs > ul {
+    width: fit-content;
+    max-width: 100%;
+    overflow: hidden;
+    gap: var(--fmt-tab-divider-width);
+    margin-top: 0;
+    margin-right: 0;
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-bottom: .5rem !important;
+    padding: 0;
+    border: 0;
+    border-radius: var(--fmt-tab-radius);
+    background-color: var(--fmt-tab-bar-bg);
+}
+body.format-multitopic .course-section-tabs > ul:last-of-type {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-bottom: var(--fmt-tabs-gap) !important;
+}
+body.format-multitopic .course-section-tabs > ul > li {
+    position: relative;
+    display: flex;
+}
+
+/* Soft divider between two tabs. */
+body.format-multitopic .course-section-tabs > ul > li + li::before {
     content: "";
-    border-left: solid 3px #0f6cbf;
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    left: calc(var(--fmt-tab-divider-width) * -1);
+    width: var(--fmt-tab-divider-width);
+    border-radius: var(--fmt-tab-divider-width);
+    background-color: var(--fmt-tab-divider);
+}
+
+body.format-multitopic .course-section-tabs > ul .nav-link {
+    margin: 0;
+    padding: 7px 13px;
+    border: 0;
+    border-radius: calc(var(--fmt-tab-radius) - .15rem);
+    background-color: transparent;
+    color: var(--fmt-tab-text);
+    font-size: .875rem;
+    font-weight: var(--bs-font-weight-medium, 500);
+    text-decoration: none;
+    transition: background-color .15s ease, color .15s ease;
+}
+body.format-multitopic .course-section-tabs > ul .nav-link:hover {
+    background-color: var(--fmt-tab-active-bg);
+    color: var(--fmt-tab-hover-text);
+}
+body.format-multitopic .course-section-tabs > ul .nav-link.active,
+body.format-multitopic .course-section-tabs > ul .nav-link.active:hover {
+    background-color: var(--fmt-tab-active-bg);
+    color: var(--fmt-tab-text);
+}
+body.format-multitopic .course-section-tabs > ul .nav-link:focus-visible {
+    outline: 2px solid var(--fmt-tab-accent);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+body.format-multitopic .course-section-tabs > ul .nav-link.disabled {
+    opacity: .5;
+}
+
+/* Tab states. */
+body.format-multitopic .course-section-tabs > ul .nav-link .tab_content.marker::before {
+    content: "";
+    border-left: 3px solid var(--fmt-tab-accent);
     padding-right: 5px;
 }
-body.format-multitopic .course-content ul.nav-tabs li a div.tab_content.dimmed {
-    color: #6a737b;
+body.format-multitopic .course-section-tabs > ul .nav-link .tab_content.dimmed {
+    color: var(--fmt-tab-muted);
+    font-style: italic;
 }
-body.format-multitopic .course-content ul.nav-tabs li a.draggable {
+/* The "+" (add page) tab of editing mode, which carries no data-id. */
+body.format-multitopic .course-section-tabs > ul li:not([data-id]) .nav-link {
+    color: var(--fmt-tab-accent);
+}
+body.format-multitopic .course-section-tabs > ul li a.draggable {
     cursor: move;
 }
-body.format-multitopic.dragging.dir-rtl .course-content ul.nav-tabs li.drop-after {
-    border-left: 1px solid #212529;
+body.format-multitopic.dragging.dir-rtl .course-section-tabs > ul li.drop-after {
+    border-left: 1px solid var(--bs-body-color);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
-body.format-multitopic.dragging.dir-ltr .course-content ul.nav-tabs li.drop-after {
-    border-right: 1px solid #212529;
+body.format-multitopic.dragging.dir-ltr .course-section-tabs > ul li.drop-after {
+    border-right: 1px solid var(--bs-body-color);
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+}
+
+/* Phone: long names wrap to two lines (capped width) so a typical set of tabs fits in one row. Words are broken
+ * only between words: themes often set a { word-break: break-word }, which would split them letter by letter. */
+@media (max-width: 575.98px) {
+    body.format-multitopic .course-section-tabs > ul .nav-link {
+        justify-content: center;
+        max-width: 9.5rem;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: normal;
+        text-align: center;
+        line-height: 1.25;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.format-multitopic .course-section-tabs > ul .nav-link {
+        transition: none;
+    }
 }
 
 /* Section */

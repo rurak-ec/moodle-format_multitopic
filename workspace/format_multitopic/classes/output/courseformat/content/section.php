@@ -177,11 +177,9 @@ class section extends section_base {
         $sectionextra = $this->fmtsectionextra;
         $format = $this->format;
 
-        if (empty($section->component) && ($sectionextra->levelsan < 2)) {
-            $data->collapsemenu = true;
-        } else {
-            unset($data->collapsemenu);
-        }
+        // CHANGED: Never show the page-level "Collapse all / Expand all" row.  Each page is already a tab, and
+        // themes such as Space 5 render this control as a full-width row, leaving a blank gap under the tabs.
+        unset($data->collapsemenu);
 
         // ADDED.
         $course = $format->get_course();
