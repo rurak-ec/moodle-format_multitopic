@@ -68,9 +68,11 @@ jobs:
           - php: '8.3'
             moodle-branch: 'MOODLE_503_STABLE'
             database: 'pgsql'
+            experimental: true
           - php: '8.4'
             moodle-branch: 'MOODLE_503_STABLE'
             database: 'mariadb'
+            experimental: true
           # Moodle 5.3 dev/main branch as non-blocking experimental check:
           - php: '8.4'
             moodle-branch: 'main'
