@@ -22,6 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['parenttabalias'] = 'Inicio';
 $string['showpagetitleinbody'] = 'Título de la página en el cuerpo';
 $string['showpagetitleinbody_help'] = 'Una página (pestaña) ya muestra su nombre en la barra de pestañas. Por defecto ese mismo nombre no se repite como encabezado dentro del cuerpo de la página, para evitar la redundancia. Elige "Mostrar también en el cuerpo de la página" para mostrarlo también como encabezado. Esto solo afecta a las páginas; los títulos de los temas siempre se muestran, y el título siempre aparece en modo edición.';
 $string['showpagetitleinbody_hide'] = 'Ocultar (mostrar solo como pestaña)';

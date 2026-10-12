@@ -7,6 +7,31 @@ upstream; entries below describe the fork-specific deltas. The format is based o
 
 ## [Unreleased]
 
+## [v5.1.1-rurak.14] - 2026-10-11
+
+Packages the tab and course page changes of 2026-10-10, which until now were only bind-mounted over the
+installed plugin in the web container (`compose.yaml`). The cron container, which rebuilds the theme CSS after
+every cache purge (`build_installed_themes_task`), kept the old `styles.css`, so the changes were lost on each
+purge. `$plugin->version` unchanged (`2026100801`): CSS, output PHP and language strings only.
+
+### Changed
+- **Tabs: bordered pill bar like Space 5's** (`styles.css`): each row is a bar with a 1px border, 4px padding and
+  4px gap; tabs at `--bs-font-size-lg` with `8px 18px` padding; the active tab gets `--bs-gray-100` and a soft
+  shadow; no dividers. Phones (< 768px): `1rem` text and up to two lines per tab.
+- **Same space above and below the tabs**: `padding-top: 1rem` above the first row and `1rem`
+  (`--fmt-tabs-gap`) below the last row; the container no longer adds its own `margin-bottom` (was
+  `1.5rem + 1.5rem`).
+- **Empty page section hidden when not editing**: a page with no activities, summary or section info no longer
+  leaves an empty box between the tabs and its first topic.
+- **Collapse/expand arrows** of topics transparent like Space 5's, with a grey hover.
+- **Label "title blocks" in pages** vertically centred and compact.
+- **Second row without an empty parent tab** (`tabtreecontainer.php`): when the parent page has no activities or
+  summary and the page is not being edited, row 2 shows only its sub-pages and the first one is active.
+  Otherwise the parent tab is shown with the alias "Inicio" (new string `parenttabalias`), so the parent name is
+  not repeated under itself.
+- **First-row tab of an empty page with sub-pages** links straight to its first visible sub-page.
+- **Course index without the per-level inline indentation** (`templates/courseformat/courseindex/section.mustache`).
+
 ## [v5.1.1-rurak.13] - 2026-10-08
 
 ### Changed

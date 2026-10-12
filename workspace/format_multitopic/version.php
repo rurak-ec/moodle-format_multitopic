@@ -30,5 +30,5 @@ $plugin->requires = 2025041400;         // Requires this Moodle version (5.0).
 $plugin->supported = [500, 503];        // Supported Moodle range: 5.0 to 5.3 (5.3 is dev/main). // rurak-ec: cap support window.
 $plugin->component = 'format_multitopic';    // Full name of the plugin (used for diagnostics). // CHANGED: format name.
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v5.1.1-rurak.13';
+$plugin->release = 'v5.1.1-rurak.14';
 $plugin->dependencies = ['format_topics' => 2025041400];

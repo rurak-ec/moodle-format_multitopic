@@ -49,6 +49,39 @@ class tabtreecontainer implements named_templatable, renderable {
     }
 
     /**
+     * Check if a section has direct content (activities or summary).
+     *
+     * @param \format_multitopic\section_info_extra|object $sectionextra
+     * @return bool
+     */
+    protected function section_has_content($sectionextra): bool {
+        if (!is_object($sectionextra) || !isset($sectionextra->sectionbase)) {
+            return false;
+        }
+        $base = $sectionextra->sectionbase;
+        $hasactivities = !empty($base->sequence);
+        $summary = trim(strip_tags($base->summary ?? ''));
+        $hassummary = !empty($summary) || preg_match('/<img|<iframe|<video|<audio/i', $base->summary ?? '');
+        return $hasactivities || $hassummary;
+    }
+
+    /**
+     * Find the first visible child section extra for a parent section.
+     *
+     * @param \format_multitopic\section_info_extra $parentsectionextra
+     * @return \format_multitopic\section_info_extra|null
+     */
+    protected function get_first_child_section_extra($parentsectionextra) {
+        $sectionsextra = $this->format->fmt_get_sections_extra();
+        foreach ($sectionsextra as $sec) {
+            if ($sec->parentid == $parentsectionextra->id && $this->format->is_section_visible($sec->sectionbase)) {
+                return $sec;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Export this data so it can be used as the context for a mustache template.
      *
      * @param renderer_base $output typically, the renderer that's calling this function
@@ -83,6 +116,18 @@ class tabtreecontainer implements named_templatable, renderable {
                 $roweft = $roweft->secondrow;
             }
             $roweft->tabs = [];
+
+            // Determinar qué pestaña de esta fila debe estar activa.
+            $activeid = $activetab[$rowlevel] ?? null;
+            if ($rowlevel == 1 && !in_array($activeid, $tabrow) && !empty($tabrow)) {
+                // Si la sección padre se omitió de la fila 2 por no tener contenido,
+                // marcar activa la primera subpestaña existente en la fila.
+                $firsttab = reset($tabrow);
+                if (is_numeric($firsttab)) {
+                    $activeid = $firsttab;
+                }
+            }
+
             foreach ($tabrow as $tabid) {
                 $roweft->tabs[] = $this->export_tab_for_template(
                     is_numeric($tabid) ? $sectionsextra[$tabid] : $tabid,
@@ -90,7 +135,7 @@ class tabtreecontainer implements named_templatable, renderable {
                     $canaddmore,
                     $output,
                 );
-                if ($tabid == $activetab[$rowlevel]) {
+                if ($tabid == $activeid) {
                     end($roweft->tabs)->active = true;
                 }
             }
@@ -141,7 +186,19 @@ class tabtreecontainer implements named_templatable, renderable {
 
         for ($level = 0; $level <= min($depthmax + ($showeditor ? 1 : 0), 1); $level++) {
             $parentid = ($level == 0) ? $format->fmtrootsectionid : $activetab[$level - 1];
-            array_unshift($tabsrow[$level], $parentid);
+
+            // Si estamos en la fila 2 (nivel 1), y la sección padre no tiene contenido propio
+            // y no estamos en modo edición, NO insertamos la pestaña en la fila 2.
+            $hideparenttab = ($level == 1)
+                && !$showeditor
+                && !empty($tabsrow[1])
+                && isset($sectionextralist[$parentid])
+                && !$this->section_has_content($sectionextralist[$parentid]);
+
+            if (!$hideparenttab) {
+                array_unshift($tabsrow[$level], $parentid);
+            }
+
             if ($showeditor) {
                 array_push($tabsrow[$level], "add" . $parentid);
             }
@@ -172,7 +229,25 @@ class tabtreecontainer implements named_templatable, renderable {
             // Make tab.
             $thissection = $sectionextra->sectionbase;
             $sectionname = get_section_name($course, $thissection);
+            $tabname = $sectionname;
+
+            // Si la sección padre se renderiza en una fila hija (subpestañas nivel 1),
+            // usar un alias visual ("Inicio") para no duplicar el nombre con la fila superior.
+            if ($level == 1 && $sectionextra->levelsan <= 0) {
+                $tabname = get_string('parenttabalias', 'format_multitopic');
+            }
+
             $url = course_get_url($course, $thissection);
+
+            // Si es una pestaña de fila 1 (nivel 0) que agrupa subsecciones pero NO tiene contenido propio,
+            // enlazar directamente a su primera subsección visible (a menos que estemos en modo edición).
+            if ($level == 0 && !$format->show_editor() && !empty($sectionextra->hassubsections) && !$this->section_has_content($sectionextra)) {
+                $firstchild = $this->get_first_child_section_extra($sectionextra);
+                if ($firstchild) {
+                    $url = course_get_url($course, $firstchild->sectionbase);
+                }
+            }
+
             $inactive = !(($thissection->section == 0) || $thissection->uservisible);
             if ($inactive) {
                 $url = null;
@@ -181,7 +256,7 @@ class tabtreecontainer implements named_templatable, renderable {
             $eft = (object)[
                 'id' => "tab_id_{$thissection->id}_l{$level}",
                 'link' => $url?->out(false),
-                'text' => html_writer::tag('div', $sectionname, ['class' =>
+                'text' => html_writer::tag('div', $tabname, ['class' =>
                     'tab_content'
                     . (($sectionextra->currentnestedlevel >= $level) ? ' marker' : '')
                     . ((!$thissection->visible || !$thissection->available) && ($thissection->section != 0)

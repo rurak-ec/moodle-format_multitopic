@@ -78,7 +78,6 @@
             courseindex-section-title"
         id="courseindexsection{{number}}"
         data-for="section_item"
-        style="padding-left: {{indent}}em;"
     >
         <a data-bs-toggle="collapse"
             href="#courseindexcollapse{{number}}"
@@ -118,7 +117,7 @@
         class="courseindex-item-content collapse {{^indexcollapsed}}show{{/indexcollapsed}}"
         aria-labelledby="courseindexsection{{number}}" role="group"
     >
-        <ul class="courseindex-sectioncontent unlist" data-for="cmlist" data-id="{{id}}" role="group" style="padding-left: {{indent}}em;">
+        <ul class="courseindex-sectioncontent unlist" data-for="cmlist" data-id="{{id}}" role="group">
             {{#cms}}
             {{> core_courseformat/local/courseindex/cm }}
             {{/cms}}

@@ -20,53 +20,56 @@ body.format-multitopic div#course-header > p#course-header-banner_attribution {
     font-size: xx-small;
 }
 
-/* Tabs: the design belongs to the format, the colours come from the active theme.
- * Each row of tabs (row 1: pages; row 2: sub-pages) is a compact segmented bar, like the theme's secondary
- * navigation: a softly tinted rounded bar with the tabs as text, a light pill on the active tab, and soft
- * dividers between every pair of neighbouring tabs (also next to the active or hovered tab).
- * Every colour is a --fmt-tab-* token taken from the theme's Bootstrap 5.3 variables, so the tabs follow each
- * theme's colours and dark mode. A theme can fine-tune them by redefining the tokens on
- * "body.format-multitopic .course-section-tabs". Rows are matched structurally (> ul) because the reactive JS
- * re-creates them, and every rule outranks the theme's own .nav-tabs styles. */
+/* =========================================================================
+   TABS — estilo idéntico a Space 5 (pill box con borde, fuente 1.25rem)
+   Autocontenido: no depende del SCSS de ningún tema externo.
+   ========================================================================= */
+
+/* CSS tokens del plugin (pueden ser sobreescritos por el tema si se desea) */
 body.format-multitopic {
-    --fmt-tabs-gap: 1.5rem;
+    --fmt-tabs-gap: 1rem;
 }
 body.format-multitopic .course-section-tabs {
-    --fmt-tab-bar-bg: var(--bs-tertiary-bg, rgba(0, 0, 0, .03));
-    --fmt-tab-text: var(--bs-body-color);
-    --fmt-tab-hover-text: var(--bs-primary);
-    --fmt-tab-active-bg: var(--bs-primary-bg-subtle, rgba(var(--bs-primary-rgb), .1));
-    --fmt-tab-divider: rgba(var(--bs-emphasis-color-rgb, 0, 0, 0), .24);
-    --fmt-tab-divider-width: 1px;
-    --fmt-tab-accent: var(--bs-primary);
-    --fmt-tab-muted: var(--bs-tertiary-color, var(--bs-secondary-color));
-    --fmt-tab-radius: var(--bs-border-radius, .375rem);
-    padding-top: var(--fmt-tabs-gap);
+    --fmt-tab-bar-bg:       transparent;
+    --fmt-tab-text:         var(--bs-body-color, #212529);
+    --fmt-tab-hover-text:   var(--bs-primary, #0d6efd);
+    --fmt-tab-active-bg:    var(--bs-gray-100, #f8f9fa);
+    --fmt-tab-divider:      transparent;
+    --fmt-tab-divider-width: 0px;
+    --fmt-tab-accent:       var(--bs-primary, #0d6efd);
+    --fmt-tab-muted:        var(--bs-secondary-color, #6c757d);
+    --fmt-tab-radius:       var(--bs-border-radius, 10px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 1rem;
+    margin-bottom: 0;
     contain: layout;
 }
 
-/* Dark mode: a faint light overlay for the bar and a translucent primary pill, so they work on any dark page. */
+/* Dark mode */
 [data-bs-theme="dark"] body.format-multitopic .course-section-tabs {
-    --fmt-tab-bar-bg: rgba(var(--bs-emphasis-color-rgb, 255, 255, 255), .05);
-    --fmt-tab-active-bg: rgba(var(--bs-primary-rgb), .25);
+    --fmt-tab-bar-bg:     transparent;
+    --fmt-tab-active-bg:  var(--bs-gray-100, #2b303c);
+    --fmt-tab-text:       var(--bs-body-color, #cbd5e1);
     --fmt-tab-hover-text: var(--bs-primary-text-emphasis, var(--bs-primary));
 }
 
-/* Each row is a bar as wide as its tabs (wrapping when needed); rows stack with a small gap and the last one
- * keeps the gap above the content. !important is needed to beat the .mb-3 utility the rows carry.
- * overflow: hidden clips the divider of the first tab of each wrapped line, which falls just outside the bar
- * (the others sit in the gap between tabs, as wide as the divider). */
+/* Barra exterior: pill box con borde, igual a Space 5 */
 body.format-multitopic .course-section-tabs > ul {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
     width: fit-content;
     max-width: 100%;
-    overflow: hidden;
-    gap: var(--fmt-tab-divider-width);
+    overflow: visible;
+    gap: 4px;
     margin-top: 0;
     margin-right: 0;
     /* stylelint-disable-next-line declaration-no-important */
-    margin-bottom: .5rem !important;
-    padding: 0;
-    border: 0;
+    margin-bottom: 1rem !important;
+    padding: 4px;
+    border: 1px solid var(--bs-border-color, #dee2e6);
     border-radius: var(--fmt-tab-radius);
     background-color: var(--fmt-tab-bar-bg);
 }
@@ -74,54 +77,71 @@ body.format-multitopic .course-section-tabs > ul:last-of-type {
     /* stylelint-disable-next-line declaration-no-important */
     margin-bottom: var(--fmt-tabs-gap) !important;
 }
+
+/* Pestana individual */
 body.format-multitopic .course-section-tabs > ul > li {
     position: relative;
-    display: flex;
-}
-
-/* Soft divider between two tabs. */
-body.format-multitopic .course-section-tabs > ul > li + li::before {
-    content: "";
-    position: absolute;
-    top: 20%;
-    bottom: 20%;
-    left: calc(var(--fmt-tab-divider-width) * -1);
-    width: var(--fmt-tab-divider-width);
-    border-radius: var(--fmt-tab-divider-width);
-    background-color: var(--fmt-tab-divider);
-}
-
-body.format-multitopic .course-section-tabs > ul .nav-link {
+    display: inline-flex;
     margin: 0;
-    padding: 7px 13px;
-    border: 0;
-    border-radius: calc(var(--fmt-tab-radius) - .15rem);
+    padding: 0;
+}
+
+/* Sin divisor vertical entre pestanas (Space 5 usa gap, no divisor) */
+body.format-multitopic .course-section-tabs > ul > li + li::before,
+body.format-multitopic .course-section-tabs > ul > li::before,
+body.format-multitopic .course-section-tabs > ul > li::after {
+    display: none;
+    content: none;
+}
+
+/* Enlace de cada pestana */
+body.format-multitopic .course-section-tabs > ul .nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 8px 18px;
+    border: 1px solid transparent;
+    border-radius: calc(var(--fmt-tab-radius) - 0.15rem);
     background-color: transparent;
     color: var(--fmt-tab-text);
-    font-size: .875rem;
+    font-family: inherit;
+    font-size: var(--bs-font-size-lg, 1.25rem);
     font-weight: var(--bs-font-weight-medium, 500);
+    line-height: 1.5;
     text-decoration: none;
-    transition: background-color .15s ease, color .15s ease;
+    box-shadow: none;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
-body.format-multitopic .course-section-tabs > ul .nav-link:hover {
-    background-color: var(--fmt-tab-active-bg);
+
+/* Hover */
+body.format-multitopic .course-section-tabs > ul .nav-link:hover:not(.active) {
+    background-color: var(--bs-primary-bg-subtle, rgba(13, 110, 253, 0.08));
     color: var(--fmt-tab-hover-text);
 }
+
+/* Activo */
 body.format-multitopic .course-section-tabs > ul .nav-link.active,
 body.format-multitopic .course-section-tabs > ul .nav-link.active:hover {
     background-color: var(--fmt-tab-active-bg);
-    color: var(--fmt-tab-text);
+    color: var(--fmt-tab-hover-text);
+    font-weight: var(--bs-font-weight-medium, 500);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+/* Foco visible (accesibilidad) */
 body.format-multitopic .course-section-tabs > ul .nav-link:focus-visible {
     outline: 2px solid var(--fmt-tab-accent);
     outline-offset: -2px;
     box-shadow: none;
 }
+
+/* Deshabilitado */
 body.format-multitopic .course-section-tabs > ul .nav-link.disabled {
     opacity: .5;
 }
 
-/* Tab states. */
+/* Tab states (marker, dimmed, edicion) */
 body.format-multitopic .course-section-tabs > ul .nav-link .tab_content.marker::before {
     content: "";
     border-left: 3px solid var(--fmt-tab-accent);
@@ -131,7 +151,6 @@ body.format-multitopic .course-section-tabs > ul .nav-link .tab_content.dimmed {
     color: var(--fmt-tab-muted);
     font-style: italic;
 }
-/* The "+" (add page) tab of editing mode, which carries no data-id. */
 body.format-multitopic .course-section-tabs > ul li:not([data-id]) .nav-link {
     color: var(--fmt-tab-accent);
 }
@@ -149,10 +168,11 @@ body.format-multitopic.dragging.dir-ltr .course-section-tabs > ul li.drop-after 
     border-bottom-right-radius: 0;
 }
 
-/* Phone: long names wrap to two lines (capped width) so a typical set of tabs fits in one row. Words are broken
- * only between words: themes often set a { word-break: break-word }, which would split them letter by letter. */
-@media (max-width: 575.98px) {
+/* Movil: pestanas mas pequenas */
+@media (max-width: 767.98px) {
     body.format-multitopic .course-section-tabs > ul .nav-link {
+        padding: 6px 14px;
+        font-size: var(--bs-font-size-base, 1rem);
         justify-content: center;
         max-width: 9.5rem;
         white-space: normal;
@@ -193,9 +213,79 @@ body.format-multitopic ul.section-list li.section .course-section-header .sectio
     scroll-margin-top: 70px;
 }
 
+/* Ocultar sección-página vacía en modo visualización (elimina el espacio fantasma entre pestañas y temas) */
+body.format-multitopic:not(.editing) ul.section-list > li.section.section-page:has(ul[data-for="cmlist"]:empty):not(:has(.summarytext)):not(:has(.rui-sectioninfo:not(:empty))) {
+    display: none !important;
+}
+
 /* Hide activity navigation */
 body.format-multitopic.path-mod.pagelayout-incourse #page #page-content .activity-navigation {
     display: none;
+}
+
+/* Flechas de colapso/expansión de sección (estilo limpio y transparente de Space 5) */
+body.format-multitopic .course-section-header .icons-collapse-expand,
+body.format-multitopic .course-section-header .icons-collapse-expand[aria-expanded="true"] {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    color: var(--bs-body-secondary-color, #6c757d) !important;
+    box-shadow: none !important;
+}
+
+body.format-multitopic .course-section-header .icons-collapse-expand:hover,
+body.format-multitopic .course-section-header .icons-collapse-expand:focus {
+    background-color: var(--bs-gray-200, #e9ecef) !important;
+    color: var(--bs-body-color, #212529) !important;
+}
+
+[data-bs-theme="dark"] body.format-multitopic .course-section-header .icons-collapse-expand:hover,
+[data-bs-theme="dark"] body.format-multitopic .course-section-header .icons-collapse-expand:focus {
+    background-color: var(--bs-gray-200, #343a40) !important;
+    color: var(--bs-body-color, #f8f9fa) !important;
+}
+
+/* Bloques de título de materia en pestañas Multitopic: centrado vertical simétrico y compacto */
+body.format-multitopic .section.section-page .modtype_label {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.format-multitopic .section.section-page .modtype_label .activity-item {
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin: 0 !important;
+}
+
+/* Eliminar el margin-bottom (1rem) de Space 5 que descentraba el texto empujándolo hacia arriba */
+body.format-multitopic .section.section-page .modtype_label .rui-contentafterlink,
+body.format-multitopic .section.section-page .modtype_label .contentafterlink {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.format-multitopic .section.section-page .modtype_label .activity-basis:empty {
+    display: none !important;
+}
+
+body.format-multitopic .section.section-page .modtype_label .activity-altcontent,
+body.format-multitopic .section.section-page .modtype_label .description-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.format-multitopic .section.section-page .modtype_label .description-inner > div {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1.2 !important;
 }
 
 /* Course Index */

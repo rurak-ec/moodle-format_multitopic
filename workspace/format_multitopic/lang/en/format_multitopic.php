@@ -63,6 +63,8 @@ $string['move_level_up'] = 'Raise page level';
 $string['page-course-view-multitopic'] = 'Any course main page in Multitopic format';
 $string['page-course-view-multitopic-x'] = 'Any course page in Multitopic format';
 
+$string['parenttabalias'] = 'Home';
+
 $string['period_0_days'] = 'No time';
 $string['period_undefined'] = 'Unspecified';
 
